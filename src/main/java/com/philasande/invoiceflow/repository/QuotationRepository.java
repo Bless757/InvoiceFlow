@@ -29,17 +29,17 @@ public interface QuotationRepository extends JpaRepository<Quotation, Long> {
     Optional<Quotation> findByIdAndUserAndIsDeletedFalse(Long id, User user);
 
     // find quote by quotation number
-    Optional<Quotation> findsByQuotationNumberAndIsDeletedFalse(String quotationNUmber);
+    Optional<Quotation> findByQuotationNumberAndIsDeletedFalse(String quotationNumber);
 
     // check if quotation number exist
-    boolean existByQuotationNumberAndIsDeletedFalse(String quotationNumber);
+    boolean existsByQuotationNumberAndIsDeletedFalse(String quotationNumber);
 
     // find quotations that are approved
     List<Quotation> findByUserAndStatusAndIsDeletedFalse(User user, DocumentStatus status);
 
     // find quotations that are expired
     @Query("SELECT q FROM Quotation q WHERE q.dueDate < :today AND q.status != :expiredStatus AND q.isDeleted = false")
-    List<Quotation> findByExpiredQuotations(@Param("today")LocalDate today, @Param("expiredStatus")DocumentStatus status);
+    List<Quotation> findByExpiredQuotations(@Param("today")LocalDate today, @Param("expiredStatus")DocumentStatus expiredStatus);
 
     // update quotation status
     @Modifying
