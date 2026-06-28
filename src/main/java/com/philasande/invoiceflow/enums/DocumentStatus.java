@@ -1,4 +1,4 @@
-package com.philasande.invoiceflow.entity;
+package com.philasande.invoiceflow.enums;
 
 public enum DocumentStatus {
     DRAFT,

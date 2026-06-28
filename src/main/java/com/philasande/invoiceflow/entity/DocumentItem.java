@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Entity
 @Table(name = "invoice_items")
-public class InvoiceItem {
+public class DocumentItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -43,5 +43,6 @@ public class InvoiceItem {
 
 
 
-
 }
+
+

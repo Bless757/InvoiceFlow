@@ -1,5 +1,6 @@
 package com.philasande.invoiceflow.entity;
 
+import com.philasande.invoiceflow.enums.DocumentStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -58,7 +59,7 @@ public class Invoice {
     private DocumentStatus status = DocumentStatus.DRAFT;
 
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL,orphanRemoval = true)
-    private List<InvoiceItem> items = new ArrayList<>();
+    private List<DocumentItem> items = new ArrayList<>();
 
     @Column(nullable = false)
     private BigDecimal subtotal = BigDecimal.ZERO;
