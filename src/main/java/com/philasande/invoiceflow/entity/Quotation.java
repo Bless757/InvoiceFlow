@@ -1,11 +1,11 @@
 package com.philasande.invoiceflow.entity;
 
+import com.philasande.invoiceflow.enums.DocumentStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.swing.text.Document;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -28,14 +28,14 @@ public class Quotation {
     private User user;
 
     @ManyToOne
-    @JoinColumn(name = "customer_id",nullable = false)
+    @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
     @ManyToOne
     @JoinColumn(name = "company_profile_id")
     private CompanyProfile companyProfile;
 
-    @Column(name = "quotation_number", unique = true,nullable = false)
+    @Column(name = "quotation_number", unique = true, nullable = false)
     private String quotationNumber;
 
     @Column(name = "issue_date", nullable = false)
@@ -49,7 +49,7 @@ public class Quotation {
     private DocumentStatus status = DocumentStatus.DRAFT;
 
     @OneToMany(mappedBy = "quotation", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<InvoiceItem> items = new ArrayList<>();
+    private List<DocumentItem> items = new ArrayList<>();
 
     @Column(nullable = false)
     private BigDecimal subtotal = BigDecimal.ZERO;
@@ -75,25 +75,20 @@ public class Quotation {
     @Column(name = "is_deleted")
     private Boolean isDeleted = false;
 
-
     @PrePersist
-    protected void onCreate(){
-        createdAt   = LocalDateTime.now();
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
-        if (issueDate == null){
+        if (issueDate == null) {
             issueDate = LocalDate.now();
         }
-        if (dueDate == null){
+        if (dueDate == null) {
             dueDate = LocalDate.now().plusDays(30);
         }
-
     }
 
     @PreUpdate
-    protected void onUpdate(){
+    protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-
     }
-
-
 }
