@@ -32,6 +32,10 @@ public class DocumentItem {
     @Column(nullable = false)
     private Double quantity = 1.0;
 
+    
+    @Column(name = "unit_price", nullable = false)
+    private BigDecimal unitPrice = BigDecimal.ZERO;
+
     @Column(name = "tax_rate")
     private Double taxRate;
 
