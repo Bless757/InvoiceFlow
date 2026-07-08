@@ -67,4 +67,6 @@ public interface QuotationRepository extends JpaRepository<Quotation, Long> {
             Pageable pageable
     );
 
+    List<Quotation> findByUserAndIsDeletedFalse(User user);
+
 }

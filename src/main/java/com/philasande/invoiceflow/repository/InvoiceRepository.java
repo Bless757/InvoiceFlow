@@ -75,4 +75,6 @@ public interface InvoiceRepository extends JpaRepository<Invoice,Long> {
           @Param("searchTerm") String searchTerm,
           Pageable pageable
   );
+
+  List<Invoice> findByUserAndIsDeletedFalse(User user);
 }
