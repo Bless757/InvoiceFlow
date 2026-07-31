@@ -11,15 +11,15 @@ import java.util.List;
 @Repository
 public interface DocumentItemRepository extends JpaRepository<DocumentItem, Long> {
 
-  // find items by quotation
+  
   List<DocumentItem> findByQuotationAndIsDeletedFalse(Quotation quotation);
 
-  // find items by invoice
+  
   List<DocumentItem> findByInvoiceAndIsDeletedFalse(Invoice invoice);
 
-  // delete all items for a quotation
+  
   void  deleteByQuotation(Quotation quotation);
 
-  // delete delete all items for an invoice
+  
   void  deleteByInvoice(Invoice invoice);
 }

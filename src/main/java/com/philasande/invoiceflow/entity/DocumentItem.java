@@ -1,17 +1,16 @@
 package com.philasande.invoiceflow.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
+import lombok.AllArgsConstructor;
 import java.math.BigDecimal;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "invoice_items")
+@Table(name = "document_items")
 public class DocumentItem {
 
     @Id
@@ -23,30 +22,22 @@ public class DocumentItem {
     private Quotation quotation;
 
     @ManyToOne
-    @JoinColumn(name = "invoice_id", nullable = false)
+    @JoinColumn(name = "invoice_id")
     private Invoice invoice;
 
     @Column(nullable = false)
     private String description;
 
     @Column(nullable = false)
-    private Double quantity = 1.0;
+    private Integer quantity;
 
-    
-    @Column(name = "unit_price", nullable = false)
-    private BigDecimal unitPrice = BigDecimal.ZERO;
-
-    @Column(name = "tax_rate")
-    private Double taxRate;
+    @Column(nullable = false)
+    private BigDecimal rate;
 
     @Column(nullable = false)
     private BigDecimal amount;
 
-    @Column(name = "is_deleted")
-    private Boolean isDeleted = false;
+    private String notes;
 
-
-
+    private boolean isDeleted = false;
 }
-
-

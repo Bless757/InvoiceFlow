@@ -1,84 +1,124 @@
 package com.philasande.invoiceflow.service;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.List;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import com.philasande.invoiceflow.entity.DocumentItem;
-import com.philasande.invoiceflow.entity.DocumentSettings;
-import com.philasande.invoiceflow.entity.Quotation;
-import com.philasande.invoiceflow.entity.User;
-import com.philasande.invoiceflow.enums.DocumentStatus;
+import com.philasande.invoiceflow.dto.QuotationRequestDto;
+import com.philasande.invoiceflow.entity.*;
+import com.philasande.invoiceflow.exception.ResourceNotFoundException;
+import com.philasande.invoiceflow.repository.CompanyProfileRepository;
+import com.philasande.invoiceflow.repository.CustomerRepository;
 import com.philasande.invoiceflow.repository.QuotationRepository;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class QuotationService {
 
-private final QuotationRepository quotationRepository;
-private final DocumentSettingsService documentSettingsService;
-private final DocumentNumberService documentNumberService;
+    private final QuotationRepository quotationRepository;
+    private final CustomerRepository customerRepository;
+    private final CompanyProfileRepository companyProfileRepository;
+    private final MapperService mapperService;
 
-@Transactional
-public Quotation createQuotation(Quotation quotation, List<DocumentItem> items, User user){
-    DocumentSettings settings = documentSettingsService.getOrCreateSettings(user);
-    quotation.setUser(user);
-    quotation.setQuotationNumber(documentNumberService.generateQuotationNumber(user));
-    quotation.setStatus(DocumentStatus.DRAFT);
-    quotation.setIssueDate(LocalDate.now());
-    quotation.setDueDate(LocalDate.now().plusDays(settings.getDefaultDueDays()));
-    quotation.setTerms(settings.getDefaultTerms());
-    quotation.setNotes(settings.getDefaultNotes());
+    public Quotation createQuotation(QuotationRequestDto dto, User user) {
+        Quotation quotation = mapperService.toEntity(dto, user);
 
-      if (items != null) {
-         items.forEach(item -> item.setQuotation(quotation));
-         quotation.setItems(items);
-      }
-         calculateTotals(quotation);
-         return quotationRepository.save(quotation);
-      }
+        long count = quotationRepository.count() + 1;
+        quotation.setQuotationNumber(String.format("QUO-%04d", count));
+        quotation.setStatus(DocumentStatus.DRAFT);
 
+        if (dto.getCustomerId() != null) {
+            Customer customer = customerRepository.findById(dto.getCustomerId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + dto.getCustomerId()));
+            quotation.setCustomer(customer);
+        }
 
- @Transactional
- public void updateQuotationStatus(Long id, DocumentStatus newStatus, User user){
-    Quotation quotation = findByIdAndUser(id, user);
-    quotation.setStatus(newStatus);
-    quotationRepository.save(quotation);
- }
+        if (dto.getCompanyProfileId() != null) {
+            CompanyProfile company = companyProfileRepository.findById(dto.getCompanyProfileId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Company Profile not found with id: " + dto.getCompanyProfileId()));
+            quotation.setCompanyProfile(company);
+        }
 
- @Transactional
- public void deleteQuotation(Long id, User user){
-    Quotation quotation = findByIdAndUser(id, user);
-    if (quotation.getStatus() != DocumentStatus.DRAFT) {
-        throw new RuntimeException("Only DRAFT quotations can be deleted");  
+        if (dto.getItems() != null && !dto.getItems().isEmpty()) {
+            List<DocumentItem> items = mapperService.toDocumentItems(dto.getItems());
+            for (DocumentItem item : items) {
+                item.setQuotation(quotation);
+            }
+            quotation.setItems(items);
+        }
+
+        calculateTotals(quotation);
+        return quotationRepository.save(quotation);
     }
-    quotation.setIsDeleted(true);
-    quotationRepository.save(quotation);
- }
 
+    public Quotation getQuotationById(Long id, User currentUser) {
+        Quotation quotation = quotationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Quotation not found with id: " + id));
 
-public Quotation findByIdAndUser(Long id, User user){
-    return quotationRepository.findByIdAndUserAndIsDeletedFalse(id, user).orElseThrow(()-> new RuntimeException("Quotation not found"));
-}
+        if (!quotation.getUser().getId().equals(currentUser.getId())) {
+            throw new RuntimeException("You are not allowed to access this quotation");
+        }
 
-public List<Quotation> findAllByUser(User user){
-    return quotationRepository.findByUserAndIsDeletedFalse(user);
-}
+        return quotation;
+    }
 
-private void calculateTotals(Quotation quotation){
-    if (quotation.getItems() == null || quotation.getItems().isEmpty()) {
-        quotation.setSubtotal(BigDecimal.ZERO);
-        quotation.setTotal(BigDecimal.ZERO);
-        return;
-         }
-        BigDecimal subtotal = quotation.getItems().stream().map(DocumentItem::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+    public Quotation updateQuotation(Long id, QuotationRequestDto dto, User currentUser) {
+        Quotation existing = getQuotationById(id, currentUser);
+
+        existing.setIssueDate(dto.getIssueDate());
+        existing.setDueDate(dto.getDueDate());
+        existing.setDiscount(dto.getDiscount() != null ? dto.getDiscount() : BigDecimal.ZERO);
+        existing.setNotes(dto.getNotes());
+        existing.setTerms(dto.getTerms());
+
+        if (dto.getCustomerId() != null) {
+            Customer customer = customerRepository.findById(dto.getCustomerId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
+            existing.setCustomer(customer);
+        }
+
+        if (dto.getCompanyProfileId() != null) {
+            CompanyProfile company = companyProfileRepository.findById(dto.getCompanyProfileId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Company Profile not found"));
+            existing.setCompanyProfile(company);
+        }
+
+        if (dto.getItems() != null) {
+            existing.getItems().clear();
+            List<DocumentItem> items = mapperService.toDocumentItems(dto.getItems());
+            for (DocumentItem item : items) {
+                item.setQuotation(existing);
+            }
+            existing.getItems().addAll(items);
+        }
+
+        calculateTotals(existing);
+        return quotationRepository.save(existing);
+    }
+
+    public void deleteQuotation(Long id, User currentUser) {
+        Quotation quotation = getQuotationById(id, currentUser);
+        quotation.setDeleted(true);
+        quotationRepository.save(quotation);
+    }
+
+    private void calculateTotals(Quotation quotation) {
+        BigDecimal subtotal = BigDecimal.ZERO;
+        if (quotation.getItems() != null) {
+            for (DocumentItem item : quotation.getItems()) {
+                if (item.getAmount() != null) {
+                    subtotal = subtotal.add(item.getAmount());
+                }
+            }
+        }
         quotation.setSubtotal(subtotal);
-        quotation.setTotal(subtotal.add(quotation.getTaxAmount()).subtract(quotation.getDiscount())); 
+        quotation.setTaxAmount(BigDecimal.ZERO);
+        BigDecimal discount = quotation.getDiscount() != null ? quotation.getDiscount() : BigDecimal.ZERO;
+        quotation.setTotal(subtotal.subtract(discount));
     }
 
+    public List<Quotation> getAllQuotationsByUser(User user) {
+        return quotationRepository.findByUser(user);
+    }
 }
