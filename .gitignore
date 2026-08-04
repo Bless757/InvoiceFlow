@@ -31,3 +31,4 @@ application-prod.properties
 
 # Test reports
 test-results/
+InvoiceFlow/
