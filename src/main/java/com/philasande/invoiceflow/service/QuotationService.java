@@ -24,7 +24,7 @@ public class QuotationService {
 
     @Transactional
     public QuotationResponseDto createQuotation(QuotationRequestDto dto, User currentUser) {
-        
+       
         Customer customer = customerRepository.findById(dto.getCustomerId())
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + dto.getCustomerId()));
 
@@ -32,21 +32,20 @@ public class QuotationService {
             throw new RuntimeException("You are not allowed to use this customer");
         }
 
-      
+        
         Quotation quotation = mapperService.toEntity(dto, currentUser);
-        quotation.setCustomer(customer);          // ← Important
+        quotation.setCustomer(customer);
         quotation.setStatus(DocumentStatus.DRAFT);
 
         
-        long count = quotationRepository.countByUser(currentUser);
-        quotation.setQuotationNumber(String.format("QUO-%04d", count + 1));
+        quotation.setQuotationNumber(generateNextQuotationNumber(currentUser));
 
-    
+        
         List<DocumentItem> items = mapperService.toDocumentItems(dto.getItems());
         items.forEach(item -> item.setQuotation(quotation));
         quotation.setItems(items);
 
-      
+       
         calculateTotals(quotation);
 
         
@@ -102,5 +101,25 @@ public class QuotationService {
 
         BigDecimal total = subtotal.subtract(discount).add(taxAmount);
         quotation.setTotal(total);
+    }
+
+    private String generateNextQuotationNumber(User user) {
+        List<Quotation> existing = quotationRepository.findByUser(user);
+
+        int max = 0;
+        for (Quotation q : existing) {
+            if (q.getQuotationNumber() != null && q.getQuotationNumber().startsWith("QUO-")) {
+                try {
+                    int num = Integer.parseInt(q.getQuotationNumber().substring(4));
+                    if (num > max) {
+                        max = num;
+                    }
+                } catch (NumberFormatException ignored) {
+                    
+                }
+            }
+        }
+
+        return String.format("QUO-%04d", max + 1);
     }
 }
