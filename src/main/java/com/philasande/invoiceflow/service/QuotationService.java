@@ -24,7 +24,6 @@ public class QuotationService {
 
     @Transactional
     public QuotationResponseDto createQuotation(QuotationRequestDto dto, User currentUser) {
-       
         Customer customer = customerRepository.findById(dto.getCustomerId())
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + dto.getCustomerId()));
 
@@ -32,7 +31,6 @@ public class QuotationService {
             throw new RuntimeException("You are not allowed to use this customer");
         }
 
-        
         Quotation quotation = mapperService.toEntity(dto, currentUser);
         quotation.setCustomer(customer);
         quotation.setStatus(DocumentStatus.DRAFT);
@@ -40,17 +38,13 @@ public class QuotationService {
         
         quotation.setQuotationNumber(generateNextQuotationNumber(currentUser));
 
-        
         List<DocumentItem> items = mapperService.toDocumentItems(dto.getItems());
         items.forEach(item -> item.setQuotation(quotation));
         quotation.setItems(items);
 
-       
         calculateTotals(quotation);
 
-        
         Quotation saved = quotationRepository.save(quotation);
-
         return mapperService.toQuotationResponseDto(saved);
     }
 
@@ -99,8 +93,7 @@ public class QuotationService {
         BigDecimal discount = quotation.getDiscount() != null ? quotation.getDiscount() : BigDecimal.ZERO;
         BigDecimal taxAmount = quotation.getTaxAmount() != null ? quotation.getTaxAmount() : BigDecimal.ZERO;
 
-        BigDecimal total = subtotal.subtract(discount).add(taxAmount);
-        quotation.setTotal(total);
+        quotation.setTotal(subtotal.subtract(discount).add(taxAmount));
     }
 
     private String generateNextQuotationNumber(User user) {
@@ -114,9 +107,7 @@ public class QuotationService {
                     if (num > max) {
                         max = num;
                     }
-                } catch (NumberFormatException ignored) {
-                    
-                }
+                } catch (NumberFormatException ignored) {}
             }
         }
 
