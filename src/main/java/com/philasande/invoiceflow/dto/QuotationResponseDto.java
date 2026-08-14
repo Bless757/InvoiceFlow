@@ -8,13 +8,11 @@ import java.util.List;
 
 @Data
 public class QuotationResponseDto {
-
     private Long id;
     private String quotationNumber;
     private LocalDate issueDate;
     private LocalDate dueDate;
     private String status;
-    private List<QuotationItemDto> items;
     private BigDecimal subtotal;
     private BigDecimal taxAmount;
     private BigDecimal discount;
@@ -22,4 +20,10 @@ public class QuotationResponseDto {
     private String notes;
     private String terms;
     private LocalDateTime createdAt;
+
+   
+    private Long customerId;
+    private String customerName;
+
+    private List<QuotationItemDto> items;
 }

@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 @Service
 public class MapperService {
 
-    
     public Customer toEntity(CustomerDto dto) {
         Customer customer = new Customer();
         customer.setName(dto.getName());
@@ -38,7 +37,6 @@ public class MapperService {
         return dto;
     }
 
-    
     public Quotation toEntity(QuotationRequestDto dto, User user) {
         Quotation quotation = new Quotation();
         quotation.setUser(user);
@@ -65,10 +63,17 @@ public class MapperService {
         dto.setTerms(quotation.getTerms());
         dto.setCreatedAt(quotation.getCreatedAt());
         dto.setItems(toQuotationItemDtos(quotation.getItems()));
+
+       
+        if (quotation.getCustomer() != null) {
+            dto.setCustomerId(quotation.getCustomer().getId());
+            dto.setCustomerName(quotation.getCustomer().getName());
+        }
+       
+
         return dto;
     }
 
-    
     public Invoice toEntity(InvoiceRequestDto dto, User user) {
         Invoice invoice = new Invoice();
         invoice.setUser(user);
@@ -96,23 +101,29 @@ public class MapperService {
         dto.setNotes(invoice.getNotes());
         dto.setCreatedAt(invoice.getCreatedAt());
         dto.setItems(toQuotationItemDtos(invoice.getItems()));
+
+        
+        if (invoice.getCustomer() != null) {
+            dto.setCustomerId(invoice.getCustomer().getId());
+            dto.setCustomerName(invoice.getCustomer().getName());
+        }
+
         return dto;
     }
 
-   
     public DocumentItem toDocumentItem(QuotationItemDto dto) {
-    DocumentItem item = new DocumentItem();
-    item.setDescription(dto.getDescription());
-    item.setQuantity(dto.getQuantity());
-    item.setRate(dto.getRate());
-    if (dto.getAmount() != null) {
-        item.setAmount(dto.getAmount());
-    } else if (dto.getRate() != null && dto.getQuantity() != null) {
-        item.setAmount(dto.getRate().multiply(BigDecimal.valueOf(dto.getQuantity())));
+        DocumentItem item = new DocumentItem();
+        item.setDescription(dto.getDescription());
+        item.setQuantity(dto.getQuantity());
+        item.setRate(dto.getRate());
+        if (dto.getAmount() != null) {
+            item.setAmount(dto.getAmount());
+        } else if (dto.getRate() != null && dto.getQuantity() != null) {
+            item.setAmount(dto.getRate().multiply(BigDecimal.valueOf(dto.getQuantity())));
+        }
+        item.setNotes(dto.getNotes());
+        return item;
     }
-    item.setNotes(dto.getNotes());
-    return item;
-}
 
     public QuotationItemDto toQuotationItemDto(DocumentItem item) {
         QuotationItemDto dto = new QuotationItemDto();

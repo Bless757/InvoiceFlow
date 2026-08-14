@@ -1,15 +1,10 @@
 package com.philasande.invoiceflow.controller;
 
-import com.philasande.invoiceflow.dto.InvoiceResponseDto;
 import com.philasande.invoiceflow.dto.QuotationRequestDto;
 import com.philasande.invoiceflow.dto.QuotationResponseDto;
-import com.philasande.invoiceflow.entity.Invoice;
-import com.philasande.invoiceflow.entity.Quotation;
 import com.philasande.invoiceflow.entity.User;
 import com.philasande.invoiceflow.security.SecurityUtils;
 import com.philasande.invoiceflow.service.EmailService;
-import com.philasande.invoiceflow.service.InvoiceService;
-import com.philasande.invoiceflow.service.MapperService;
 import com.philasande.invoiceflow.service.PdfGeneratorService;
 import com.philasande.invoiceflow.service.QuotationService;
 import lombok.RequiredArgsConstructor;
@@ -27,42 +22,28 @@ import java.util.Map;
 public class QuotationController {
 
     private final QuotationService quotationService;
-    private final InvoiceService invoiceService;
-    private final MapperService mapperService;
     private final PdfGeneratorService pdfGeneratorService;
     private final EmailService emailService;
 
     @PostMapping
     public ResponseEntity<QuotationResponseDto> createQuotation(@RequestBody QuotationRequestDto dto) {
         User currentUser = SecurityUtils.getCurrentUser();
-        Quotation saved = quotationService.createQuotation(dto, currentUser);
-        return ResponseEntity.ok(mapperService.toQuotationResponseDto(saved));
+        QuotationResponseDto response = quotationService.createQuotation(dto, currentUser);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping
     public ResponseEntity<List<QuotationResponseDto>> getMyQuotations() {
         User currentUser = SecurityUtils.getCurrentUser();
-        List<Quotation> quotations = quotationService.getAllQuotationsByUser(currentUser);
-        List<QuotationResponseDto> responses = quotations.stream()
-                .map(mapperService::toQuotationResponseDto)
-                .toList();
-        return ResponseEntity.ok(responses);
+        List<QuotationResponseDto> quotations = quotationService.getAllQuotations(currentUser);
+        return ResponseEntity.ok(quotations);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<QuotationResponseDto> getQuotation(@PathVariable Long id) {
         User currentUser = SecurityUtils.getCurrentUser();
-        Quotation quotation = quotationService.getQuotationById(id, currentUser);
-        return ResponseEntity.ok(mapperService.toQuotationResponseDto(quotation));
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<QuotationResponseDto> updateQuotation(
-            @PathVariable Long id,
-            @RequestBody QuotationRequestDto dto) {
-        User currentUser = SecurityUtils.getCurrentUser();
-        Quotation updated = quotationService.updateQuotation(id, dto, currentUser);
-        return ResponseEntity.ok(mapperService.toQuotationResponseDto(updated));
+        QuotationResponseDto quotation = quotationService.getQuotationById(id, currentUser);
+        return ResponseEntity.ok(quotation);
     }
 
     @DeleteMapping("/{id}")
@@ -72,39 +53,22 @@ public class QuotationController {
         return ResponseEntity.ok("Quotation deleted successfully");
     }
 
+    // Temporary: PDF and Email are commented out until we update the services
+    // We will fix them properly next
+
+    /*
     @GetMapping("/{id}/pdf")
     public ResponseEntity<byte[]> downloadQuotationPdf(@PathVariable Long id) {
-        User currentUser = SecurityUtils.getCurrentUser();
-        Quotation quotation = quotationService.getQuotationById(id, currentUser);
-        byte[] pdfBytes = pdfGeneratorService.generateQuotationPdf(quotation);
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + quotation.getQuotationNumber() + ".pdf")
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(pdfBytes);
+        // Will be fixed after updating PdfGeneratorService
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{id}/send")
     public ResponseEntity<String> sendQuotation(
             @PathVariable Long id,
             @RequestBody Map<String, String> request) {
-
-        String toEmail = request.get("email");
-        if (toEmail == null || toEmail.isBlank()) {
-            return ResponseEntity.badRequest().body("Email is required");
-        }
-
-        User currentUser = SecurityUtils.getCurrentUser();
-        Quotation quotation = quotationService.getQuotationById(id, currentUser);
-        emailService.sendQuotationEmail(quotation, toEmail);
-
-        return ResponseEntity.ok("Quotation sent successfully to " + toEmail);
+        // Will be fixed after updating EmailService
+        return ResponseEntity.ok("Not implemented yet");
     }
-
-    @PostMapping("/{id}/convert")
-    public ResponseEntity<InvoiceResponseDto> convertToInvoice(@PathVariable Long id) {
-        User currentUser = SecurityUtils.getCurrentUser();
-        Invoice invoice = invoiceService.convertFromQuotation(id, currentUser);
-        return ResponseEntity.ok(mapperService.toInvoiceResponseDto(invoice));
-    }
+    */
 }

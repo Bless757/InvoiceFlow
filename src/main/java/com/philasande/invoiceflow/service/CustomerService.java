@@ -32,8 +32,25 @@ public class CustomerService {
         return customerRepository.findByUser(user);
     }
 
-    public Customer getCustomerById(Long id) {
-        return customerRepository.findById(id)
+    public Customer getCustomerById(Long id, User currentUser) {
+        Customer customer = customerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + id));
+
+        if (!customer.getUser().getId().equals(currentUser.getId())) {
+            throw new RuntimeException("You are not allowed to access this customer");
+        }
+        return customer;
+    }
+
+    public void deleteCustomer(Long id, User currentUser) {
+        Customer customer = customerRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + id));
+
+        
+        if (!customer.getUser().getId().equals(currentUser.getId())) {
+            throw new RuntimeException("You are not allowed to delete this customer");
+        }
+
+        customerRepository.delete(customer);
     }
 }

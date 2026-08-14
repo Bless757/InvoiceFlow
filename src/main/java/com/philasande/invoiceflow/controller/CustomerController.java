@@ -39,7 +39,15 @@ public class CustomerController {
 
     @GetMapping("/{id}")
     public ResponseEntity<CustomerDto> getCustomer(@PathVariable Long id) {
-        Customer customer = customerService.getCustomerById(id);
+        User currentUser = SecurityUtils.getCurrentUser();
+        Customer customer = customerService.getCustomerById(id, currentUser);
         return ResponseEntity.ok(mapperService.toDto(customer));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCustomer(@PathVariable Long id) {
+        User currentUser = SecurityUtils.getCurrentUser();
+        customerService.deleteCustomer(id, currentUser);
+        return ResponseEntity.noContent().build();
     }
 }
