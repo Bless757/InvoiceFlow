@@ -54,7 +54,7 @@ public class Quotation {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "company_id")
-    private CompanyProfile company;
+    private CompanyProfile companyProfile;   
 
     @OneToMany(mappedBy = "quotation", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DocumentItem> items = new ArrayList<>();
